@@ -20,42 +20,26 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   bool isBack = true;
   double angle = 0;
-  int cardIndex = 0;
-  final int numberOfCards = 34;
-  late AnimationController _controller;
-  late Animation<double> _disappearAnimation;
+  int currentBackIndex = 1; // Start with the first back image
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _disappearAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+  String get currentBackImage {
+    return 'assets/Player-$currentBackIndex.png';
   }
 
   void _flip() {
-    if (isBack) {
-      setState(() {
-        angle = (angle + pi) % (2 * pi);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    setState(() {
+      angle = (angle + pi) % (2 * pi);
+      if (angle == 0) {
+        isBack = !isBack; // Toggle between front and back
+        if (!isBack) {
+          currentBackIndex = (currentBackIndex % 20) +
+              1; // Cycle through Player-1.png to Player-20.png
+        }
+      }
+    });
   }
 
   @override
@@ -68,92 +52,59 @@ class _HomePageState extends State<HomePage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               GestureDetector(
-                onTap: () {
-                  if (isBack) {
-                    _flip();
-                  } else {
-                    _controller.forward().then((_) {
-                      setState(() {
-                        cardIndex = (cardIndex + 1) % numberOfCards;
-                        angle = 0;
-                        isBack = true;
-                        _controller.reset();
-                      });
-                    });
-                  }
-                },
+                onTap: _flip,
                 child: TweenAnimationBuilder(
                   tween: Tween<double>(begin: 0, end: angle),
-                  duration: Duration(milliseconds: 500),
+                  duration: Duration(seconds: 1),
                   builder: (BuildContext context, double val, __) {
-                    if (val >= (pi / 2)) {
-                      Future.delayed(Duration(milliseconds: 250), () {
-                        setState(() {
-                          isBack = false;
-                        });
-                      });
-                    } else {
-                      isBack = true;
-                    }
-                    return AnimatedBuilder(
-                      animation: _disappearAnimation,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: _disappearAnimation.value,
-                          child: Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.001)
-                              ..rotateY(val),
-                            child: Container(
-                              width: 309,
-                              height: 474,
-                              child: isBack
-                                  ? Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                        image: DecorationImage(
-                                          image: AssetImage("assets/back.png"),
-                                        ),
-                                      ),
-                                    )
-                                  : Transform(
-                                      alignment: Alignment.center,
-                                      transform: Matrix4.identity()
-                                        ..rotateY(pi),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                          image: DecorationImage(
-                                            image:
-                                                AssetImage("assets/face.png"),
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "Surprise ! 🎊",
-                                            style: TextStyle(
-                                              fontSize: 30.0,
-                                            ),
-                                          ),
-                                        ),
+                    isBack = val >= (pi / 2);
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateY(val),
+                      child: Container(
+                        width: 309,
+                        height: 474,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10.0),
+                          image: DecorationImage(
+                            image: AssetImage(
+                              isBack ? 'assets/back.png' : currentBackImage,
+                            ),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        child: isBack
+                            ? Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()..rotateY(pi),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                    image: DecorationImage(
+                                      image: AssetImage("assets/face.png"),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      "Mr.Beast",
+                                      style: TextStyle(
+                                        fontSize: 120.0,
+                                        color: Colors.red,
+                                        fontFamily: 'TT-Bluescreens',
                                       ),
                                     ),
-                            ),
-                          ),
-                        );
-                      },
+                                  ),
+                                ),
+                              )
+                            : Container(),
+                      ),
                     );
                   },
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
-                "Card ${cardIndex + 1} of $numberOfCards",
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              )
             ],
           ),
         ),
