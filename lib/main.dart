@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
@@ -35,6 +36,8 @@ class _HomePageState extends State<HomePage> {
   int playerCount = 3;
   int spyCount = 2;
   bool isAnimating = false;
+  String message = '';
+  Timer? messageTimer;
 
   List<String> words = [
     'Monopoly',
@@ -178,9 +181,28 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     modifiedList = modifyList();
+    showMessage('Welcome to Spy! Tap "New Game" to begin.', 10);
+  }
+
+  @override
+  void dispose() {
+    messageTimer?.cancel();
+    super.dispose();
   }
 
   String get currentBackImage => 'assets/Player-$currentBackIndex.png';
+
+  void showMessage(String msg, [int durationSeconds = 3]) {
+    setState(() {
+      message = msg;
+    });
+    messageTimer?.cancel();
+    messageTimer = Timer(Duration(seconds: durationSeconds), () {
+      setState(() {
+        message = '';
+      });
+    });
+  }
 
   void _flip() {
     if (isAnimating) return;
@@ -192,10 +214,11 @@ class _HomePageState extends State<HomePage> {
         isBack = !isBack;
         Future.delayed(Duration(milliseconds: 300), () {
           if (!isBack) {
-            currentBackIndex = (currentBackIndex % 20) + 1;
+            currentBackIndex = (currentBackIndex % playerCount) + 1;
 
-            if (currentBackIndex > playerCount) {
-              currentBackIndex = 1;
+            if (currentBackIndex == 1) {
+              showMessage(
+                  'All players have seen their roles. Starting a new round!');
               modifiedList = modifyList();
             }
           }
@@ -217,9 +240,13 @@ class _HomePageState extends State<HomePage> {
       angle = 0;
       isBack = true;
     });
+    showMessage('New game started! Pass the device to the first player.');
   }
 
   void _showSettingsDialog() {
+    int tempPlayerCount = playerCount;
+    int tempSpyCount = spyCount;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -239,9 +266,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: Colors.white),
-                controller: TextEditingController(text: playerCount.toString()),
+                controller:
+                    TextEditingController(text: tempPlayerCount.toString()),
                 onChanged: (value) {
-                  playerCount = int.tryParse(value) ?? playerCount;
+                  tempPlayerCount = int.tryParse(value) ?? tempPlayerCount;
                 },
               ),
               SizedBox(height: 16),
@@ -255,9 +283,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 keyboardType: TextInputType.number,
                 style: TextStyle(color: Colors.white),
-                controller: TextEditingController(text: spyCount.toString()),
+                controller:
+                    TextEditingController(text: tempSpyCount.toString()),
                 onChanged: (value) {
-                  spyCount = int.tryParse(value) ?? spyCount;
+                  tempSpyCount = int.tryParse(value) ?? tempSpyCount;
                 },
               ),
             ],
@@ -266,10 +295,26 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               child: Text('Apply', style: TextStyle(color: Colors.red)),
               onPressed: () {
-                setState(() {
-                  modifiedList = modifyList();
-                });
-                Navigator.of(context).pop();
+                if (tempPlayerCount > tempSpyCount &&
+                    tempPlayerCount > 0 &&
+                    tempSpyCount > 0) {
+                  setState(() {
+                    playerCount = tempPlayerCount;
+                    spyCount = tempSpyCount;
+                    modifiedList = modifyList();
+                  });
+                  Navigator.of(context).pop();
+                  showMessage(
+                      'Settings updated: $playerCount players, $spyCount spies');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Invalid settings. Ensure player count is greater than spy count and both are positive.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
             ),
           ],
@@ -302,6 +347,15 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (message.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    message,
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               GestureDetector(
                 onTap: _flip,
                 child: TweenAnimationBuilder(
@@ -350,7 +404,7 @@ class _HomePageState extends State<HomePage> {
                                     child: Text(
                                       modifiedList[currentBackIndex - 1],
                                       style: TextStyle(
-                                        fontSize: 120.0,
+                                        fontSize: 60.0,
                                         color: Colors.red,
                                         fontFamily: 'TT-Bluescreens',
                                         shadows: [
