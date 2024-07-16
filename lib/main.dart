@@ -10,6 +10,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: Colors.red,
+        scaffoldBackgroundColor: Colors.grey[900],
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+        ),
+      ),
       home: HomePage(),
     );
   }
@@ -155,9 +163,7 @@ class _HomePageState extends State<HomePage> {
         uniqueIndices.add(indexToReplace);
       }
 
-      List<int> uniqueIndicesList = uniqueIndices.toList();
-
-      for (int indexToReplace in uniqueIndicesList) {
+      for (int indexToReplace in uniqueIndices.toList()) {
         newList[indexToReplace] = 'Spy';
       }
       return newList;
@@ -174,17 +180,13 @@ class _HomePageState extends State<HomePage> {
     modifiedList = modifyList();
   }
 
-  String get currentBackImage {
-    return 'assets/Player-$currentBackIndex.png';
-  }
+  String get currentBackImage => 'assets/Player-$currentBackIndex.png';
 
   void _flip() {
-    if (isAnimating) {
-      return; // Don't flip if animation is already in progress
-    }
+    if (isAnimating) return;
 
     setState(() {
-      isAnimating = true; // Set animation flag
+      isAnimating = true;
       angle = (angle + pi) % (2 * pi);
       if (angle == 0) {
         isBack = !isBack;
@@ -201,7 +203,6 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    // After animation duration (500ms), reset the animation flag
     Future.delayed(Duration(milliseconds: 500), () {
       setState(() {
         isAnimating = false;
@@ -223,33 +224,47 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Settings"),
+          backgroundColor: Colors.grey[800],
+          title: Text("Settings", style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               TextField(
-                decoration: InputDecoration(labelText: 'Number of Players'),
+                decoration: InputDecoration(
+                  labelText: 'Number of Players',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white70),
+                  ),
+                ),
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: Colors.white),
+                controller: TextEditingController(text: playerCount.toString()),
                 onChanged: (value) {
-                  setState(() {
-                    playerCount = int.tryParse(value) ?? playerCount;
-                  });
+                  playerCount = int.tryParse(value) ?? playerCount;
                 },
               ),
+              SizedBox(height: 16),
               TextField(
-                decoration: InputDecoration(labelText: 'Number of Spies'),
+                decoration: InputDecoration(
+                  labelText: 'Number of Spies',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white70),
+                  ),
+                ),
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: Colors.white),
+                controller: TextEditingController(text: spyCount.toString()),
                 onChanged: (value) {
-                  setState(() {
-                    spyCount = int.tryParse(value) ?? spyCount;
-                  });
+                  spyCount = int.tryParse(value) ?? spyCount;
                 },
               ),
             ],
           ),
           actions: <Widget>[
-            ElevatedButton(
-              child: Text('Apply'),
+            TextButton(
+              child: Text('Apply', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 setState(() {
                   modifiedList = modifyList();
@@ -266,17 +281,18 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF292a3e),
       appBar: AppBar(
+        backgroundColor: Colors.red,
         title: Text(
           'Spy',
           style: TextStyle(
-            fontFamily: 'TT-Bluescreens', // Replace with your custom font
+            fontFamily: 'TT-Bluescreens',
+            color: Colors.white,
           ),
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.settings, color: Colors.white),
             onPressed: _showSettingsDialog,
           ),
         ],
@@ -303,6 +319,14 @@ class _HomePageState extends State<HomePage> {
                         height: 474,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
                           image: DecorationImage(
                             image: AssetImage(
                               isBack ? 'assets/back.png' : currentBackImage,
@@ -329,6 +353,13 @@ class _HomePageState extends State<HomePage> {
                                         fontSize: 120.0,
                                         color: Colors.red,
                                         fontFamily: 'TT-Bluescreens',
+                                        shadows: [
+                                          Shadow(
+                                            blurRadius: 10.0,
+                                            color: Colors.black,
+                                            offset: Offset(5.0, 5.0),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -340,10 +371,21 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _startNewGame,
                 child: Text('New Game'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  textStyle: TextStyle(fontSize: 18),
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Players: $playerCount | Spies: $spyCount',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
             ],
           ),
