@@ -24,6 +24,9 @@ class _HomePageState extends State<HomePage> {
   bool isBack = true;
   double angle = 0;
   int currentBackIndex = 1;
+  int playerCount = 3;
+  int spyCount = 2;
+  bool isAnimating = false;
 
   List<String> words = [
     'Monopoly',
@@ -141,12 +144,34 @@ class _HomePageState extends State<HomePage> {
   ];
 
   List<String> modifyList() {
-    Random random = Random();
-    String randomWord = words[random.nextInt(words.length)];
-    List<String> newList = List.filled(4, randomWord);
-    int indexToReplace = random.nextInt(newList.length);
-    newList[indexToReplace] = 'Spy';
-    return newList;
+    if (currentBackIndex == 1) {
+      Random random = Random();
+      String randomWord = words[random.nextInt(words.length)];
+      List<String> newList = List.filled(playerCount, randomWord);
+      Set<int> uniqueIndices = {};
+
+      while (uniqueIndices.length < spyCount) {
+        int indexToReplace = random.nextInt(newList.length);
+        uniqueIndices.add(indexToReplace);
+      }
+
+      List<int> uniqueIndicesList = uniqueIndices.toList();
+
+      for (int indexToReplace in uniqueIndicesList) {
+        newList[indexToReplace] = 'Spy';
+      }
+      return newList;
+    } else {
+      return [];
+    }
+  }
+
+  List<String> modifiedList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    modifiedList = modifyList();
   }
 
   String get currentBackImage {
@@ -154,15 +179,33 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _flip() {
+    if (isAnimating) {
+      return; // Don't flip if animation is already in progress
+    }
+
     setState(() {
+      isAnimating = true; // Set animation flag
       angle = (angle + pi) % (2 * pi);
       if (angle == 0) {
-        isBack = !isBack; // Toggle between front and back
-        if (!isBack) {
-          currentBackIndex = (currentBackIndex % 20) +
-              1; // Cycle through Player-1.png to Player-20.png
-        }
+        isBack = !isBack;
+        Future.delayed(Duration(milliseconds: 300), () {
+          if (!isBack) {
+            currentBackIndex = (currentBackIndex % 20) + 1;
+
+            if (currentBackIndex > playerCount) {
+              currentBackIndex = 1;
+              modifiedList = modifyList();
+            }
+          }
+        });
       }
+    });
+
+    // After animation duration (500ms), reset the animation flag
+    Future.delayed(Duration(milliseconds: 500), () {
+      setState(() {
+        isAnimating = false;
+      });
     });
   }
 
@@ -179,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                 onTap: _flip,
                 child: TweenAnimationBuilder(
                   tween: Tween<double>(begin: 0, end: angle),
-                  duration: Duration(seconds: 1),
+                  duration: Duration(milliseconds: 500),
                   builder: (BuildContext context, double val, __) {
                     isBack = val >= (pi / 2);
                     return Transform(
@@ -213,7 +256,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      "Mr.Beast",
+                                      modifiedList[currentBackIndex - 1],
                                       style: TextStyle(
                                         fontSize: 120.0,
                                         color: Colors.red,
