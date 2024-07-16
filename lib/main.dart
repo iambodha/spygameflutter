@@ -209,10 +209,78 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _startNewGame() {
+    setState(() {
+      currentBackIndex = 1;
+      modifiedList = modifyList();
+      angle = 0;
+      isBack = true;
+    });
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Settings"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                decoration: InputDecoration(labelText: 'Number of Players'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  setState(() {
+                    playerCount = int.tryParse(value) ?? playerCount;
+                  });
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: 'Number of Spies'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  setState(() {
+                    spyCount = int.tryParse(value) ?? spyCount;
+                  });
+                },
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              child: Text('Apply'),
+              onPressed: () {
+                setState(() {
+                  modifiedList = modifyList();
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF292a3e),
+      appBar: AppBar(
+        title: Text(
+          'Spy',
+          style: TextStyle(
+            fontFamily: 'TT-Bluescreens', // Replace with your custom font
+          ),
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: _showSettingsDialog,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: Column(
@@ -271,6 +339,11 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _startNewGame,
+                child: Text('New Game'),
               ),
             ],
           ),
